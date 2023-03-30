@@ -1,4 +1,4 @@
-package com.example.bapostsapp
+package com.example.bapostsapp.ui
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
