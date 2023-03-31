@@ -25,10 +25,16 @@ class PostsRepositoryImpl @Inject constructor(
         val postsResult = postsRemoteDataSource.getPosts()
         val postDtoList = when (postsResult) {
             is ResultOf.Failure -> return@withContext ResultOf.Failure(
-                /* TODO: Add proper exception here later */ null, null
+                message = postsResult.message, throwable = postsResult.throwable
             )
             is ResultOf.Success -> postsResult.data
         }
+
+        // TODO: Add here saving of posts data to the local database
+
+        // Getting the user data based on which user ids are available in the retrieved posts
+        val userIdsRequired = postDtoList.map { it.userId }.distinct()
+        getAndSaveUsersFromTheApi(userIds = userIdsRequired)
 
         // TODO: Temporary implementation to be able to pass along retrieved data to the ui:
         val postsList = mutableListOf<Post>()
@@ -44,6 +50,11 @@ class PostsRepositoryImpl @Inject constructor(
             )
         }
         return@withContext ResultOf.Success(data = postsList)
+    }
+
+    private suspend fun getAndSaveUsersFromTheApi(userIds: List<Long>) = withContext(dispatcher) {
+        val responses = userIds.map { usersRemoteDataSource.getUser(userId = it) }
+        // TODO: Add here saving of user data to the local database
     }
 
 }

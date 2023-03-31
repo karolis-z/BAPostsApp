@@ -1,5 +1,7 @@
 package com.example.bapostsapp.core.di
 
+import com.example.bapostsapp.core.util.ConnectivityChecker
+import com.example.bapostsapp.core.util.ConnectivityCheckerImpl
 import com.example.bapostsapp.data.remote.PostsRemoteDataSource
 import com.example.bapostsapp.data.remote.PostsRemoteDataSourceImpl
 import com.example.bapostsapp.data.remote.UserRemoteDataSourceImpl
@@ -27,4 +29,9 @@ abstract class RepositoriesAndDataSourcesModule {
     abstract fun bindUsersRemoteDataSource(
         userRemoteDataSourceImpl: UserRemoteDataSourceImpl
     ): UsersRemoteDataSource
+
+    @Binds
+    abstract fun bindConnectivityChecker(
+        connectivityCheckerImpl: ConnectivityCheckerImpl
+    ): ConnectivityChecker
 }
