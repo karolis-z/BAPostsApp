@@ -5,10 +5,10 @@ data class UserDto(
     val name: String,
     val username: String,
     val email: String,
-    val addressDto: AddressDto,
+    val address: AddressDto,
     val phone: String,
     val website: String,
-    val companyDto: CompanyDto
+    val company: CompanyDto
 )
 
 data class CompanyDto(
@@ -22,7 +22,7 @@ data class AddressDto(
     val suite: String,
     val city: String,
     val zipcode: String,
-    val geoDto: GeoDto
+    val geo: GeoDto
 )
 
 data class GeoDto(
