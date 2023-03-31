@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">BAPostsApp</string>
+
+    <!-- SCREEN TITLES  -->
+    <string name="screen_title_posts_screen">Posts</string>
 </resources>
