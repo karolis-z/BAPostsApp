@@ -1,31 +1,31 @@
-package com.example.bapostsapp.domain.entities
+package com.example.bapostsapp.data.entities
 
-data class User(
+data class UserDto(
     val id: Long,
     val name: String,
     val username: String,
     val email: String,
-    val address: Address,
+    val addressDto: AddressDto,
     val phone: String,
     val website: String,
-    val company: Company
+    val companyDto: CompanyDto
 )
 
-data class Company(
+data class CompanyDto(
     val name: String,
     val catchPhrase: String,
     val bs: String
 )
 
-data class Address(
+data class AddressDto(
     val street: String,
     val suite: String,
     val city: String,
     val zipcode: String,
-    val geo: Geo
+    val geoDto: GeoDto
 )
 
-data class Geo(
-    val lat: Double?,
-    val lng: Double?
+data class GeoDto(
+    val lat: String,
+    val lng: String
 )
