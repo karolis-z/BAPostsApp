@@ -9,14 +9,12 @@ data class UserEntity(
     val name: String,
     val username: String,
     val email: String,
-    val addressEntity: AddressEntity,
     val phone: String,
-    val website: String,
-    val companyEntity: CompanyEntity
+    val website: String
 )
 
 @Entity(
-    primaryKeys = ["id", "userId"],
+    primaryKeys = ["name", "userId"],
     foreignKeys = [ForeignKey(
         entity = UserEntity::class,
         parentColumns = ["id"],
@@ -26,8 +24,6 @@ data class UserEntity(
     )]
 )
 data class CompanyEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
     val userId: Long,
     val name: String,
     val catchPhrase: String,
@@ -35,7 +31,7 @@ data class CompanyEntity(
 )
 
 @Entity(
-    primaryKeys = ["id", "userId"],
+    primaryKeys = ["street", "suite", "userId"],
     foreignKeys = [ForeignKey(
         entity = UserEntity::class,
         parentColumns = ["id"],
@@ -45,8 +41,6 @@ data class CompanyEntity(
     )]
 )
 data class AddressEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
     val userId: Long,
     val street: String,
     val suite: String,
@@ -73,5 +67,5 @@ data class UserEntityFull(
         entityColumn = "userId",
         entity = AddressEntity::class
     )
-    val address: AddressEntity,
+    val address: AddressEntity
 )

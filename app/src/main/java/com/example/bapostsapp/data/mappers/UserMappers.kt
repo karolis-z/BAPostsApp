@@ -9,9 +9,7 @@ fun UserDto.toUserEntity(): UserEntity {
         name = this.name,
         username = this.username,
         email = this.email,
-        addressEntity = this.address.toAddressEntity(userId = this.id),
         phone = this.phone,
-        website = this.website,
-        companyEntity = this.company.toCompanyEntity(userId = this.id)
+        website = this.website
     )
 }

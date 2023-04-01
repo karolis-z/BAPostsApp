@@ -1,6 +1,9 @@
 package com.example.bapostsapp.data.repositories
 
 import com.example.bapostsapp.core.di.IoDispatcher
+import com.example.bapostsapp.data.local.PostsLocalDataSource
+import com.example.bapostsapp.data.local.UsersLocalDataSource
+import com.example.bapostsapp.data.mappers.toPostEntityList
 import com.example.bapostsapp.data.remote.PostsRemoteDataSource
 import com.example.bapostsapp.data.remote.UsersRemoteDataSource
 import com.example.bapostsapp.domain.entities.Post
@@ -15,6 +18,8 @@ private const val TAG = "POSTS_REPOSITORY"
 class PostsRepositoryImpl @Inject constructor(
     private val postsRemoteDataSource: PostsRemoteDataSource,
     private val usersRemoteDataSource: UsersRemoteDataSource,
+    private val postsLocalDataSource: PostsLocalDataSource,
+    private val usersLocalDataSource: UsersLocalDataSource,
     @IoDispatcher private val dispatcher: CoroutineDispatcher
 ) : PostsRepository {
 
@@ -30,7 +35,7 @@ class PostsRepositoryImpl @Inject constructor(
             is ResultOf.Success -> postsResult.data
         }
 
-        // TODO: Add here saving of posts data to the local database
+        postsLocalDataSource.saveNewPosts(posts = postDtoList.toPostEntityList())
 
         // Getting the user data based on which user ids are available in the retrieved posts
         val userIdsRequired = postDtoList.map { it.userId }.distinct()
@@ -54,7 +59,16 @@ class PostsRepositoryImpl @Inject constructor(
 
     private suspend fun getAndSaveUsersFromTheApi(userIds: List<Long>) = withContext(dispatcher) {
         val responses = userIds.map { usersRemoteDataSource.getUser(userId = it) }
-        // TODO: Add here saving of user data to the local database
+        /* Choosing here to basically ignore all unsuccessful retrievals of user data. In a real
+        * world scenario this wouldn't be OK, but here we don't have an expectation. I'm making an
+        * assumption that the most important content is the list of posts. If that's unavailable -
+        * error should be shown to user, but if user data is unavailable, posts can still be shown
+        * with some sort of indication that user data is unavailable for a particular post. */
+        responses.forEach { userResult ->
+            if (userResult is ResultOf.Success) {
+                usersLocalDataSource.saveNewUser(user = userResult.data)
+            }
+        }
     }
 
 }

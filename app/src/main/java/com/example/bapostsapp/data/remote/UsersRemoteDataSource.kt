@@ -37,7 +37,7 @@ class UserRemoteDataSourceImpl @Inject constructor(
         }
 
         val apiResponse = try {
-            postsApi.getUser(userId = 50)
+            postsApi.getUser(userId = userId)
         } catch (e: Exception) {
             return@withContext getFailedApiResponseResult(exception = e)
         }
