@@ -5,17 +5,22 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Error
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.PullRefreshState
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -25,6 +30,7 @@ import com.example.bapostsapp.domain.entities.Post
 
 private val AvatarCircleSize = 40.dp
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun PostsScreen(
     modifier: Modifier = Modifier
@@ -35,66 +41,32 @@ fun PostsScreen(
     val posts by viewModel.posts.collectAsStateWithLifecycle(initialValue = emptyList())
 
     val showErrorDialog by viewModel.showErrorDialogState.collectAsStateWithLifecycle()
+    val isRefreshing by remember { derivedStateOf { uiState is PostsUiState.Refreshing } }
 
-    Column(
+    val pullRefreshState = rememberPullRefreshState(isRefreshing, { viewModel.refreshData() })
+
+    Box(
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp)
+            .pullRefresh(pullRefreshState)
     ) {
-        Crossfade(targetState = uiState, modifier = Modifier.fillMaxSize()) { uiState ->
+        Crossfade(
+            targetState = uiState,
+            modifier = Modifier.fillMaxSize()
+        ) { uiState ->
             when (uiState) {
-                PostsUiState.Refreshing -> LoadingCircle(modifier = Modifier.fillMaxSize())
+                /* The Refreshing state is now essentially indicated by the pull to refresh
+                indicator, so there's no need to add another indicator. */
+                PostsUiState.Refreshing -> Unit
                 is PostsUiState.Error -> {
-                    val errorText = when (uiState.error) {
-                        PostsError.NO_INTERNET ->
-                            stringResource(
-                                id = R.string.posts_error_dialog_no_internet,
-                                stringResource(id = R.string.posts_error_dialog_button_retry)
-                            )
-                        PostsError.FAILED_API_REQUEST ->
-                            stringResource(
-                                id = R.string.posts_error_dialog_something_wrong,
-                                stringResource(id = R.string.posts_error_dialog_button_retry)
-                            )
-                        PostsError.NO_DATA_AVAILABLE ->
-                            stringResource(
-                                id = R.string.posts_error_dialog_no_data,
-                                stringResource(id = R.string.posts_error_dialog_button_retry)
-                            )
-                    }
-                    AnimatedVisibility(visible = showErrorDialog) {
-                        AlertDialog(
-                            onDismissRequest = { },
-                            text = { Text(text = errorText) },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Outlined.Error,
-                                    contentDescription = null // Icon is decorative, no need for cd
-                                )
-                            },
-                            title = {
-                                Text(text = stringResource(id = R.string.posts_error_dialog_title))
-                            },
-                            properties = DialogProperties(
-                                dismissOnBackPress = false,
-                                dismissOnClickOutside = false
-                            ),
-                            confirmButton = {
-                                TextButton(onClick = { viewModel.refreshData() }) {
-                                    Text(text = stringResource(
-                                        id = R.string.posts_error_dialog_button_retry
-                                    ))
-                                }
-                            },
-                            dismissButton = {
-                                TextButton(onClick = { viewModel.showErrorDialog(false) }) {
-                                    Text(text = stringResource(
-                                        id = R.string.posts_error_dialog_button_cancel
-                                    ))
-                                }
-                            }
-                        )
-                    }
+                    ErrorContent(
+                        uiState = uiState,
+                        showErrorDialog = showErrorDialog,
+                        pullRefreshState = pullRefreshState,
+                        isRefreshing = isRefreshing,
+                        onDialogRetryClicked = { viewModel.refreshData() },
+                        onDialogCancelClicked = { viewModel.showErrorDialog(false) })
                 }
                 is PostsUiState.Ready -> {
                     LazyColumn(
@@ -118,6 +90,101 @@ fun PostsScreen(
                 }
             }
         }
+        /* This check for uiState is needed because we essentially have two PullRefreshIndicators.
+        * One here and the other in ErrorContent because the PullRefreshIndicator required a
+        * scrollable container. So when the uiState is Error, the PullRefreshIndicator in
+        * ErrorContent will be the one that's active. While generally they would overlap and user
+        * wouldn't notice, in future some padding or other changes could unintentionally move one of
+        * those two indicators a bit and then on refresh two indicators would be shown which we want
+        * to avoid. */
+        if (uiState !is PostsUiState.Error) {
+            PullRefreshIndicator(
+                refreshing = isRefreshing,
+                state = pullRefreshState,
+                modifier = Modifier.align(Alignment.TopCenter)
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun ErrorContent(
+    uiState: PostsUiState.Error,
+    showErrorDialog: Boolean,
+    pullRefreshState: PullRefreshState,
+    isRefreshing: Boolean,
+    onDialogRetryClicked: () -> Unit,
+    onDialogCancelClicked: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val errorText = when (uiState.error) {
+        PostsError.NO_INTERNET ->
+            stringResource(
+                id = R.string.posts_error_dialog_no_internet,
+                stringResource(id = R.string.posts_error_dialog_button_retry)
+            )
+        PostsError.FAILED_API_REQUEST ->
+            stringResource(
+                id = R.string.posts_error_dialog_something_wrong,
+                stringResource(id = R.string.posts_error_dialog_button_retry)
+            )
+        PostsError.NO_DATA_AVAILABLE ->
+            stringResource(
+                id = R.string.posts_error_dialog_no_data,
+                stringResource(id = R.string.posts_error_dialog_button_retry)
+            )
+    }
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .pullRefresh(pullRefreshState)
+            .verticalScroll(rememberScrollState())
+    ) {
+        AnimatedVisibility(visible = showErrorDialog) {
+            AlertDialog(
+                onDismissRequest = { },
+                text = { Text(text = errorText) },
+                icon = {
+                    Icon(
+                        imageVector = Icons.Outlined.Error,
+                        contentDescription = null // Icon is decorative, no need for cd
+                    )
+                },
+                title = {
+                    Text(text = stringResource(id = R.string.posts_error_dialog_title))
+                },
+                properties = DialogProperties(
+                    dismissOnBackPress = false,
+                    dismissOnClickOutside = false
+                ),
+                confirmButton = {
+                    TextButton(onClick = onDialogRetryClicked) {
+                        Text(
+                            text = stringResource(
+                                id = R.string.posts_error_dialog_button_retry
+                            )
+                        )
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = onDialogCancelClicked) {
+                        Text(
+                            text = stringResource(
+                                id = R.string.posts_error_dialog_button_cancel
+                            )
+                        )
+                    }
+                }
+            )
+        }
+        /* PullRefresh requires a scrollable container. Therefore implementing another Indicator
+        * here within a Box that wraps the entire Error state content. */
+        PullRefreshIndicator(
+            refreshing = isRefreshing,
+            state = pullRefreshState,
+            modifier = Modifier.align(Alignment.TopCenter)
+        )
     }
 }
 
@@ -157,22 +224,6 @@ fun PostCard(
                     }
                 }
             }
-        )
-    }
-}
-
-@Composable
-fun LoadingCircle(
-    modifier: Modifier = Modifier,
-    circleSize: Dp = 100.dp,
-    color: Color = ProgressIndicatorDefaults.linearColor,
-    strokeWidth: Dp = ProgressIndicatorDefaults.CircularStrokeWidth
-) {
-    Box(modifier = modifier, contentAlignment = Alignment.Center) {
-        CircularProgressIndicator(
-            modifier = Modifier.size(circleSize),
-            color = color,
-            strokeWidth = strokeWidth
         )
     }
 }
