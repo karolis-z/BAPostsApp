@@ -1,18 +1,24 @@
 package com.example.bapostsapp.ui.postsscreen
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Error
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bapostsapp.R
 import com.example.bapostsapp.domain.entities.Post
@@ -25,24 +31,91 @@ fun PostsScreen(
 ) {
 
     val viewModel: PostsViewModel = viewModel()
-    val posts by viewModel.posts.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val posts by viewModel.posts.collectAsStateWithLifecycle(initialValue = emptyList())
+
+    val showErrorDialog by viewModel.showErrorDialogState.collectAsStateWithLifecycle()
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(horizontal = 16.dp)
     ) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            items(
-                items = posts,
-                key = { post -> post.id }
-            ) { post: Post ->
-                /* TODO: Leaving the onClick not implemented, will consider implementing expanding
-                *   of card to show body of post later. */
-                PostCard(post = post, onClick = { /*TODO*/ }, modifier = Modifier.fillMaxWidth())
+        Crossfade(targetState = uiState, modifier = Modifier.fillMaxSize()) { uiState ->
+            when (uiState) {
+                PostsUiState.Refreshing -> LoadingCircle(modifier = Modifier.fillMaxSize())
+                is PostsUiState.Error -> {
+                    val errorText = when (uiState.error) {
+                        PostsError.NO_INTERNET ->
+                            stringResource(
+                                id = R.string.posts_error_dialog_no_internet,
+                                stringResource(id = R.string.posts_error_dialog_button_retry)
+                            )
+                        PostsError.FAILED_API_REQUEST ->
+                            stringResource(
+                                id = R.string.posts_error_dialog_something_wrong,
+                                stringResource(id = R.string.posts_error_dialog_button_retry)
+                            )
+                        PostsError.NO_DATA_AVAILABLE ->
+                            stringResource(
+                                id = R.string.posts_error_dialog_no_data,
+                                stringResource(id = R.string.posts_error_dialog_button_retry)
+                            )
+                    }
+                    AnimatedVisibility(visible = showErrorDialog) {
+                        AlertDialog(
+                            onDismissRequest = { },
+                            text = { Text(text = errorText) },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.Error,
+                                    contentDescription = null // Icon is decorative, no need for cd
+                                )
+                            },
+                            title = {
+                                Text(text = stringResource(id = R.string.posts_error_dialog_title))
+                            },
+                            properties = DialogProperties(
+                                dismissOnBackPress = false,
+                                dismissOnClickOutside = false
+                            ),
+                            confirmButton = {
+                                TextButton(onClick = { viewModel.refreshData() }) {
+                                    Text(text = stringResource(
+                                        id = R.string.posts_error_dialog_button_retry
+                                    ))
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = { viewModel.showErrorDialog(false) }) {
+                                    Text(text = stringResource(
+                                        id = R.string.posts_error_dialog_button_cancel
+                                    ))
+                                }
+                            }
+                        )
+                    }
+                }
+                is PostsUiState.Ready -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        contentPadding = PaddingValues(vertical = 16.dp)
+                    ) {
+                        items(
+                            items = posts,
+                            key = { post -> post.id }
+                        ) { post: Post ->
+                            /* TODO: Leaving the onClick empty, will consider implementing
+                                expanding of card to show body of post later. */
+                            PostCard(
+                                post = post,
+                                onClick = { },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -84,6 +157,22 @@ fun PostCard(
                     }
                 }
             }
+        )
+    }
+}
+
+@Composable
+fun LoadingCircle(
+    modifier: Modifier = Modifier,
+    circleSize: Dp = 100.dp,
+    color: Color = ProgressIndicatorDefaults.linearColor,
+    strokeWidth: Dp = ProgressIndicatorDefaults.CircularStrokeWidth
+) {
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        CircularProgressIndicator(
+            modifier = Modifier.size(circleSize),
+            color = color,
+            strokeWidth = strokeWidth
         )
     }
 }

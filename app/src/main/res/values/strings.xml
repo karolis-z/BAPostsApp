@@ -7,4 +7,12 @@
     <!-- POSTS SCREEN -->
     <string name="posts_unknown_user_name">Unknown user</string>
     <string name="posts_unknown_user_initial">\?</string>
+
+    <string name="posts_error_dialog_title">Oops…</string>
+    <string name="posts_error_dialog_no_data">No posts available. Please tap on %s to refresh the data.</string>
+    <string name="posts_error_dialog_no_internet">You are offline. Please check your internet connection and tap on %s.</string>
+    <string name="posts_error_dialog_something_wrong">Something went wrong. Try to fetch new data by tapping on %s.</string>
+    <string name="posts_error_dialog_button_retry">Retry</string>
+    <string name="posts_error_dialog_button_cancel">Cancel</string>
+
 </resources>
