@@ -1,6 +1,7 @@
 package com.example.bapostsapp.data.repositories
 
 import com.example.bapostsapp.core.di.IoDispatcher
+import com.example.bapostsapp.data.entities.UserDto
 import com.example.bapostsapp.data.local.PostsLocalDataSource
 import com.example.bapostsapp.data.local.UsersLocalDataSource
 import com.example.bapostsapp.data.mappers.toPost
@@ -54,10 +55,9 @@ class PostsRepositoryImpl @Inject constructor(
         * assumption that the most important content is the list of posts. If that's unavailable -
         * error should be shown to user, but if user data is unavailable, posts can still be shown
         * with some sort of indication that user data is unavailable for a particular post. */
-        responses.forEach { userResult ->
-            if (userResult is ResultOf.Success) {
-                usersLocalDataSource.saveNewUser(user = userResult.data)
-            }
+        val newUsers = responses.filterIsInstance<ResultOf.Success<UserDto>>().map { it.data }
+        if (newUsers.isNotEmpty()) {
+            usersLocalDataSource.saveNewUsers(users = newUsers)
         }
     }
 
@@ -66,10 +66,15 @@ class PostsRepositoryImpl @Inject constructor(
         * domain model which needs a user's name that's available in the UserEntity. */
         return postsLocalDataSource.getPosts()
             .combine(usersLocalDataSource.getUsers()) { posts, users ->
-                posts.map { post ->
-                    // Finding the user with userId from the post and then getting their name
-                    val userName = users.find { user -> user.user.id == post.userId }?.user?.name
-                    post.toPost(userName = userName)
+                /* Choosing to return an empty list if either of posts of users is empty. */
+                if (posts.isEmpty() || users.isEmpty()) {
+                    emptyList()
+                } else {
+                    posts.map { post ->
+                        // Finding the user with userId from the post and then getting their name
+                        val userName = users.find { user -> user.user.id == post.userId }?.user?.name
+                        post.toPost(userName = userName)
+                    }
                 }
             }
     }

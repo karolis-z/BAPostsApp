@@ -23,15 +23,17 @@ interface UsersDao {
     suspend fun deleteAllUsers()
 
     /**
-     * Adds a new [UserEntity] along with embedded objects [AddressEntity] and [CompanyEntity].
-     * Takes in a [UserDto] because it holds the userId value which is needed for [AddressEntity]
-     * and [CompanyEntity].
+     * Saves the list of [UserDto]s by converting each element to [UserEntity] and its related
+     * objects [AddressEntity] and [CompanyEntity]. Takes in a [UserDto] because it holds the userId
+     * value which is needed for [AddressEntity] and [CompanyEntity].
      */
     @Transaction
-    suspend fun saveNewUser(userDto: UserDto) {
-        insertUserEntity(user = userDto.toUserEntity())
-        insertAddressEntity(address = userDto.address.toAddressEntity(userId = userDto.id))
-        insertCompanyEntity(company = userDto.company.toCompanyEntity(userId = userDto.id))
+    suspend fun saveNewUsers(users: List<UserDto>) {
+        users.forEach { user ->
+            insertUserEntity(user = user.toUserEntity())
+            insertAddressEntity(address = user.address.toAddressEntity(userId = user.id))
+            insertCompanyEntity(company = user.company.toCompanyEntity(userId = user.id))
+        }
     }
 
     @Query("SELECT * FROM 'users' ORDER BY id")

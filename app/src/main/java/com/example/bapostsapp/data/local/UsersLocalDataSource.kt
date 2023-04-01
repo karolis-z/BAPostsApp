@@ -11,10 +11,10 @@ import javax.inject.Inject
 interface UsersLocalDataSource {
 
     /**
-     * Saves a new user in the local database. This will overwrite a previously stored user with the
-     * same [UserDto.id].
+     * Saves a list of users in the local database. This will overwrite all previously stored users
+     * with the same [UserDto.id].
      */
-    suspend fun saveNewUser(user: UserDto)
+    suspend fun saveNewUsers(users: List<UserDto>)
 
     /**
      * Deletes all users and its related objects from the local database.
@@ -33,8 +33,8 @@ class UsersLocalDataSourceImpl @Inject constructor(
     @IoDispatcher private val dispatcher: CoroutineDispatcher
 ) : UsersLocalDataSource {
 
-    override suspend fun saveNewUser(user: UserDto) = withContext(dispatcher) {
-        usersDao.saveNewUser(userDto = user)
+    override suspend fun saveNewUsers(users: List<UserDto>) = withContext(dispatcher) {
+        usersDao.saveNewUsers(users = users)
     }
 
     override suspend fun deleteAllUsers() = withContext(dispatcher) {
