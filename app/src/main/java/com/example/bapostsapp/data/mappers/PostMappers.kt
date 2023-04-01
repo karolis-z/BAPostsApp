@@ -8,6 +8,16 @@ fun Post.toPostEntity(): PostEntity {
     return PostEntity(id = this.id, userId = this.userId, title = this.title, body = this.body)
 }
 
+fun PostEntity.toPost(userName: String?): Post {
+    return Post(
+        id = this.id,
+        userId = this.userId,
+        userName = userName,
+        title = this.title,
+        body = this.body
+    )
+}
+
 fun PostDto.toPostEntity(): PostEntity {
     return PostEntity(
         id = this.id,

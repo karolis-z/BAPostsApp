@@ -24,7 +24,7 @@ interface UsersLocalDataSource {
     /**
      * Returns a [Flow] containing a list of [UserEntityFull] objects from the local database.
      */
-    fun getPosts(): Flow<List<UserEntityFull>>
+    fun getUsers(): Flow<List<UserEntityFull>>
 
 }
 
@@ -41,5 +41,5 @@ class UsersLocalDataSourceImpl @Inject constructor(
         usersDao.deleteAllUsers()
     }
 
-    override fun getPosts(): Flow<List<UserEntityFull>> = usersDao.getUsersFlow()
+    override fun getUsers(): Flow<List<UserEntityFull>> = usersDao.getUsersFlow()
 }

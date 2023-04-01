@@ -3,4 +3,8 @@
 
     <!-- SCREEN TITLES  -->
     <string name="screen_title_posts_screen">Posts</string>
+
+    <!-- POSTS SCREEN -->
+    <string name="posts_unknown_user_name">Unknown user</string>
+    <string name="posts_unknown_user_initial">\?</string>
 </resources>

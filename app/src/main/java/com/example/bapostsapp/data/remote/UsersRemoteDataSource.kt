@@ -5,7 +5,7 @@ import com.example.bapostsapp.core.di.IoDispatcher
 import com.example.bapostsapp.core.util.ConnectivityChecker
 import com.example.bapostsapp.data.ApiException
 import com.example.bapostsapp.data.entities.UserDto
-import com.example.bapostsapp.domain.entities.ResultOf
+import com.example.bapostsapp.domain.entities.result.ResultOf
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import javax.inject.Inject

@@ -1,4 +1,4 @@
-package com.example.bapostsapp.domain.entities
+package com.example.bapostsapp.domain.entities.result
 
 sealed class ResultOf<out T> {
     data class Success<out R>(val data: R): ResultOf<R>()
