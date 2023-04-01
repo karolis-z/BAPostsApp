@@ -46,17 +46,18 @@ class PostsViewModel @Inject constructor(
     * should be shown. Only when user manually dismisses the error dialog, is when the value should
     * be changed to false. */
     private val showErrorDialog: MutableStateFlow<Boolean> = MutableStateFlow(true)
-    val showErrorDialogState: StateFlow<Boolean> = showErrorDialog.combine(uiState) { showError, uiState ->
-        /* Show error dialog only if the ui state is Error and the manually set showErrorDialog is
-        * also true. This is needed because even though the UiState can be Error, but the user can
-        * click on Dismiss button on the dialog and then we don't want to show the dialog, but the
-        * uiState remains Error. */
-        showError && uiState is PostsUiState.Error
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = false
-    )
+    val showErrorDialogState: StateFlow<Boolean> =
+        showErrorDialog.combine(uiState) { showError, uiState ->
+            /* Show error dialog only if the ui state is Error and the manually set showErrorDialog
+            is also true. This is needed because even though the UiState can be Error, but the user
+            can click on Dismiss button on the dialog and then we don't want to show the dialog, but
+            the uiState remains Error. */
+            showError && uiState is PostsUiState.Error
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = false
+        )
 
     fun refreshData() {
         viewModelScope.launch {
