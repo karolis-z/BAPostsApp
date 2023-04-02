@@ -2,6 +2,7 @@ package com.example.bapostsapp.ui.postsscreen
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,6 +21,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
@@ -78,11 +80,8 @@ fun PostsScreen(
                             items = posts,
                             key = { post -> post.id }
                         ) { post: Post ->
-                            /* TODO: Leaving the onClick empty, will consider implementing
-                                expanding of card to show body of post later. */
                             PostCard(
                                 post = post,
-                                onClick = { },
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
@@ -192,20 +191,40 @@ fun ErrorContent(
 @Composable
 fun PostCard(
     post: Post,
-    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showBody by remember { mutableStateOf(false) }
     Card(
-        onClick = onClick,
+        onClick = { showBody = !showBody },
         modifier = modifier,
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         ListItem(
             modifier = Modifier.fillMaxWidth(),
-            headlineContent = { Text(text = post.title) },
+            headlineContent = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = post.title,
+                        maxLines = if (showBody) Int.MAX_VALUE else 2,
+                        minLines = if (showBody) 1 else 2,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = modifier.animateContentSize()
+                    )
+                    AnimatedVisibility(visible = showBody) {
+                        Column {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(text = post.body, style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                }
+
+            },
             supportingContent = {
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = post.userName ?: stringResource(id = R.string.posts_unknown_user_name)
+                    text = post.userName ?: stringResource(id = R.string.posts_unknown_user_name),
+                    style = MaterialTheme.typography.bodySmall
                 )
             },
             leadingContent = {
@@ -241,7 +260,6 @@ fun PostCardPreview() {
                 "reiciendis\\nqui aperiam non debitis possimus qui neque nisi nulla"
     )
     PostCard(
-        post = post,
-        onClick = {}
+        post = post
     )
 }
